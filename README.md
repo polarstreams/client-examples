@@ -6,6 +6,7 @@ different technology stacks.
 ## Examples by Tech Stack
 
 - [Node.js](./nodejs/)
+- [Python](./python/)
 
 ## License
 
