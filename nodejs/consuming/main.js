@@ -30,16 +30,15 @@ async function main() {
   process.on('SIGINT', () => finished = true)
 
   // Register the consumer using an unique consumer id and the group it belongs to
-  await got
-    .put(`${baseUrl}/v1/consumer/register?consumerId=${consumerId}&group=${consumerGroup}&topic=${topic}`)
+  await got.put(`${baseUrl}/v1/consumer/register?consumerId=${consumerId}&group=${consumerGroup}&topic=${topic}`)
 
-  console.log(`Starting to poll for data`)
+  console.log(`Starting to poll for data, use Ctrl+C to exit`)
 
   while (!finished) {
     let hasData = false
     for (let i = 0; i < discovery.hosts.length; i++) {
       const items = await got
-        .post(`${baseUrl}/v1/consumer/poll?consumerId=${consumerId}`, { headers: { 'Accept': 'application/json'}})
+        .post(`${baseUrl}/v1/consumer/poll?consumerId=${consumerId}`, { headers: { 'Accept': 'application/json' }})
         .json()
 
       if (items) {
@@ -54,9 +53,16 @@ async function main() {
     }
 
     if (!hasData) {
-      await setTimeout(1000)
+      // The last poll didn't return any data
+      await setTimeout(500)
     }
   }
+
+  console.log('Finished polling after SIGINT, committing final consumer offsets')
+
+  // Manually commit the last position for other consumers to resume where it left off
+  await got.post(`${baseUrl}/v1/consumer/commit?consumerId=${consumerId}`)
+  console.log('Exiting example')
 }
 
 function setupDiscovery() {
@@ -99,5 +105,4 @@ main()
   .catch(err => console.error('Execution resulted in error', err.message, err.stack))
   .then(() => {
     discovery.shutdown()
-    console.log('Example finished')
   })
