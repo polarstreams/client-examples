@@ -7,22 +7,20 @@ const consumerPort = 9252 // The port number of the Barco consumer interface
 const discoveryPort = 9250 // The port number of the Barco discovery interface
 const topic = 'my-topic'
 const consumerGroup = 'my-group'
-const consumerId = 'c1' // A unique id of teh client in the cluster, uuids or the application instance id are good a fit
+const consumerId = 'c1' // A unique id of the client in the cluster, uuids or the application instance id are good a fit
 
 // In Kubernetes, the Barco service is a headless service that resolves to the Barco broker addresses.
 const serviceName = process.env['BARCO_EXAMPLE_SERVICE_NAME'] ?? 'barco.streams'
 
-// Holds information of the cluster
-const discovery = setupDiscovery()
-
 async function main() {
   const baseUrl = `http://${serviceName}:${consumerPort}`
 
-  // Check the status of one of the brokers
+  // Check the status of the consumer service on one of the brokers
   const status = await got(`${baseUrl}/status`, {timeout: {connect: 200}}).text()
   console.log(status.trim())
 
-  // Get the size of the cluster
+  // Get the size of the cluster and the host names
+  const discovery = new Discovery()
   await discovery.start()
   console.log(`Discovered ${discovery.hosts.length} broker(s)`)
 
@@ -37,8 +35,9 @@ async function main() {
   while (!finished) {
     let hasData = false
     for (let i = 0; i < discovery.hosts.length; i++) {
+      const hostUrl = `http://${discovery.nextHost()}:${consumerPort}`
       const items = await got
-        .post(`${baseUrl}/v1/consumer/poll?consumerId=${consumerId}`, { headers: { 'Accept': 'application/json' }})
+        .post(`${hostUrl}/v1/consumer/poll?consumerId=${consumerId}`, { headers: { 'Accept': 'application/json' }})
         .json()
 
       if (items) {
@@ -58,51 +57,46 @@ async function main() {
     }
   }
 
-  console.log('Finished polling after SIGINT, committing final consumer offsets')
+  console.log('Finished polling after SIGINT, unregistering and committing final consumer offsets')
 
-  // Manually commit the last position for other consumers to resume where it left off
-  await got.post(`${baseUrl}/v1/consumer/commit?consumerId=${consumerId}`)
+  // Unregister and commit the last position for other consumer instances of the same group to resume where it left off
+  await got.post(`${baseUrl}/v1/consumer/goodbye?consumerId=${consumerId}`)
   console.log('Exiting example')
 }
 
-function setupDiscovery() {
-  let finished = false
-  const info = {
-    hosts: [],
-    shutdown: () => { finished = true },
-    start: async () => {
-      info.hosts = await getBrokers()
-      // Start discovering in the background
-      refreshHostsInLoop().catch(err => console.error('Discovery failed', err.message, err.stack))
-    }
+/** Encapsulates discovery logic */
+class Discovery {
+  #index = 0
+  hosts = []
+
+  async start() {
+    await this.#loadBrokers()
+    // Check for the topology from time to time
+    this.#refreshHostsInTheBackground().catch(err => console.error('Discovery refresh failed', err.message, err.stack))
   }
 
-  async function refreshHostsInLoop() {
-    while (!finished) {
-      info.hosts = await getBrokers()
-      await setTimeout(30000, null, { ref: false })
-    }
+  nextHost() {
+    return this.hosts[(this.#index++)%this.hosts.length] // round-robin through hosts
   }
 
-  return info
-}
-
-async function getBrokers() {
-  let hosts = []
-  // Check for the topology from time to time
-  const topology = await got(`http://${serviceName}:${discoveryPort}/v1/brokers`).json()
-  if (topology?.names?.length) {
-    hosts = topology.names
-  } else {
-    for (let i = 0; i < topology.length; i++) {
-      hosts.push(`${topology.baseName}${i}.${topology.serviceName}`)
-    }
+  async #refreshHostsInTheBackground() {
+    await setTimeout(30000, null, { ref: false })
   }
-  return hosts
+
+  async #loadBrokers() {
+    let hosts = []
+    const topology = await got(`http://${serviceName}:${discoveryPort}/v1/brokers`).json()
+    if (topology?.names?.length) {
+      hosts = topology.names
+    } else {
+      for (let i = 0; i < topology.length; i++) {
+        hosts.push(`${topology.baseName}${i}.${topology.serviceName}`)
+      }
+    }
+
+    this.hosts = hosts
+  }
 }
 
 main()
   .catch(err => console.error('Execution resulted in error', err.message, err.stack))
-  .then(() => {
-    discovery.shutdown()
-  })
