@@ -14,5 +14,5 @@ Set the service name to `{my-service}.{my-namespace}` or `localhost` if you are 
 ```shell
 cd producing
 python -m pip install requests # Install requests in your Python env
-BARCO_EXAMPLE_SERVICE_NAME=localhost python example.py
+BARCO_EXAMPLE_SERVICE_NAME=barco.streams python example.py
 ```

@@ -7,6 +7,7 @@ different technology stacks.
 
 - [Node.js](./nodejs/)
 - [Python](./python/)
+- [Rust](./rust/)
 
 ## License
 
