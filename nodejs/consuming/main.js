@@ -34,10 +34,10 @@ async function main() {
 
   while (!finished) {
     let hasData = false
-    for (let i = 0; i < discovery.hosts.length; i++) {
-      const hostUrl = `http://${discovery.nextHost()}:${consumerPort}`
+    for (const broker of discovery.hosts) {
+      const brokerUrl = `http://${broker}:${consumerPort}`
       const items = await got
-        .post(`${hostUrl}/v1/consumer/poll?consumerId=${consumerId}`, { headers: { 'Accept': 'application/json' }})
+        .post(`${brokerUrl}/v1/consumer/poll?consumerId=${consumerId}`, { headers: { 'Accept': 'application/json' }})
         .json()
 
       if (items) {
@@ -66,17 +66,12 @@ async function main() {
 
 /** Encapsulates discovery logic */
 class Discovery {
-  #index = 0
   hosts = []
 
   async start() {
     await this.#loadBrokers()
     // Check for the topology from time to time
     this.#refreshHostsInTheBackground().catch(err => console.error('Discovery refresh failed', err.message, err.stack))
-  }
-
-  nextHost() {
-    return this.hosts[(this.#index++)%this.hosts.length] // round-robin through hosts
   }
 
   async #refreshHostsInTheBackground() {
