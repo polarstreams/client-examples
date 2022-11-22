@@ -1,5 +1,6 @@
-use hyper::{client::Client, Body, Method, Request};
-use std::env;
+use std::{collections::HashMap, env};
+
+use reqwest::Client;
 
 const PRODUCER_PORT: i32 = 9251;
 const TOPIC: &str = "my-topic";
@@ -11,17 +12,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let service_name: String = env::var(SERVICE_NAME_VAR).unwrap_or("barco.streams".into());
 
     let client = Client::new();
-    let req = Request::builder()
-        .method(Method::POST)
-        .uri(format!(
+    let res = client
+        .post(format!(
             "http://{service_name}:{PRODUCER_PORT}/v1/topic/{TOPIC}/messages"
         ))
-        .header("content-type", "application/json")
-        .body(Body::from(r#"{"hello":"world"}"#))?;
+        .json(&HashMap::from([("hello", "world")]))
+        .send()
+        .await?;
 
-    // Produce a message
-    let resp = client.request(req).await?;
-    println!("Message produced: {}", resp.status());
+    println!("Message produced: {}", res.status());
 
     Ok(())
 }
