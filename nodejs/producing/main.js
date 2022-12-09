@@ -2,12 +2,12 @@
 
 import got from 'got'
 
-// The port number of the Barco producer interface
+// The port number of the PolarStreams producer interface
 const producerPort = 9251
 const topic = 'my-topic'
 
-// In Kubernetes, the Barco service is a headless service that resolves to the Barco broker addresses.
-const serviceName = process.env['BARCO_EXAMPLE_SERVICE_NAME'] ?? 'barco.streams'
+// In Kubernetes, the PolarStreams service is a headless service that resolves to the PolarStreams broker addresses.
+const serviceName = process.env['POLAR_EXAMPLE_SERVICE_NAME'] ?? 'polar.streams'
 
 async function main() {
   // Check the status of one of the brokers
