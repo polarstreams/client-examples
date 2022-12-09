@@ -6,17 +6,17 @@ use serde::Deserialize;
 use tokio::{signal::unix::{signal, SignalKind}, time::sleep};
 use serde_with::{serde_as, DisplayFromStr};
 
-const CONSUMER_PORT: i32 = 9252; // The port number of the Barco consumer interface
-const DISCOVERY_PORT: i32 = 9250; // The port number of the Barco discovery interface
+const CONSUMER_PORT: i32 = 9252; // The port number of the PolarStreams consumer interface
+const DISCOVERY_PORT: i32 = 9250; // The port number of the PolarStreams discovery interface
 const TOPIC: &str = "my-topic";
-const SERVICE_NAME_VAR: &str = "BARCO_EXAMPLE_SERVICE_NAME";
+const SERVICE_NAME_VAR: &str = "POLAR_EXAMPLE_SERVICE_NAME";
 const CONSUMER_GROUP: &str = "my-group";
 const CONSUMER_ID: &str = "c1"; // A unique id of the client in the cluster, uuids or the application instance id are good a fit
 
 #[tokio::main(flavor = "multi_thread")]
 async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-    // In Kubernetes, the Barco service is a headless service that resolves to the Barco broker addresses.
-    let service_name: String = env::var(SERVICE_NAME_VAR).unwrap_or("barco.streams".into());
+    // In Kubernetes, the PolarStreams service is a headless service that resolves to the PolarStreams broker addresses.
+    let service_name: String = env::var(SERVICE_NAME_VAR).unwrap_or("polar.streams".into());
 
     let discovery = Discovery::new(&service_name).await?;
     println!("Discovered {} broker(s)", discovery.brokers.len());

@@ -1,6 +1,6 @@
-# Barco Client Examples
+# PolarStreams Client Examples
 
-Examples on how to produce and consume messages on [Barco Streams](https://github.com/barcostreams/barco) using
+Examples on how to produce and consume messages on [PolarStreams](https://github.com/polarstreams/polar) using
 different technology stacks.
 
 ## Examples by Tech Stack

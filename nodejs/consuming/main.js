@@ -3,14 +3,14 @@
 import got from 'got'
 import { setTimeout } from 'timers/promises';
 
-const consumerPort = 9252 // The port number of the Barco consumer interface
-const discoveryPort = 9250 // The port number of the Barco discovery interface
+const consumerPort = 9252 // The port number of the PolarStreams consumer interface
+const discoveryPort = 9250 // The port number of the PolarStreams discovery interface
 const topic = 'my-topic'
 const consumerGroup = 'my-group'
 const consumerId = 'c1' // A unique id of the client in the cluster, uuids or the application instance id are good a fit
 
-// In Kubernetes, the Barco service is a headless service that resolves to the Barco broker addresses.
-const serviceName = process.env['BARCO_EXAMPLE_SERVICE_NAME'] ?? 'barco.streams'
+// In Kubernetes, the PolarStreams service is a headless service that resolves to the PolarStreams broker addresses.
+const serviceName = process.env['POLAR_EXAMPLE_SERVICE_NAME'] ?? 'polar.streams'
 
 async function main() {
   const baseUrl = `http://${serviceName}:${consumerPort}`

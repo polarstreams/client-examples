@@ -1,7 +1,7 @@
 {
-  "name": "barco-producing",
+  "name": "polar-producing",
   "version": "0.0.1",
-  "description": "Client example showing how to produce messages on Barco Streams using Node.js.",
+  "description": "Client example showing how to produce messages on PolarStreams using Node.js.",
   "main": "main.js",
   "type": "module",
   "license": "Apache-2.0",
